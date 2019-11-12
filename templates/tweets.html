@@ -1,0 +1,21 @@
+<html>
+  <style>
+    body{
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+  <body>
+    <div>
+      {% for key, value in tweets.items()%}
+      <div>{{key}}</div>
+      <div>{{value}}</div>
+      {% endfor %}
+    </div>
+    <form method="GET" action="/display">
+      <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
+    </form>
+  </body>
+
+</html>
