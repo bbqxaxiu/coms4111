@@ -163,6 +163,7 @@ def another():
   create_tweet("vladverba", "vlad's test text", "vlad's test media")
   return render_template("another.html")
 
+# Creates a tweet for a given handle.
 @app.route('/create', methods=['GET'])
 def create():
     handle = request.args.get('handle')
@@ -175,6 +176,16 @@ def create():
 
     return redirect('/')
 
+# Displays a user's tweets
+@app.route('/your_tweets', methods=['GET'])
+def your_tweets():
+    handle = request.args.get('handle')
+    handle_exists = check_if_handle_exists(handle)
+    if(handle_exists):
+        tweets = get_tweets_from_users([handle])
+        return render_template("your_tweets.html", tweets=tweets)
+    else:
+        return redirect('/')
 
 # Checks if the user exists.
 # If the user exists, display tweets of people they follow.
@@ -185,7 +196,7 @@ def display():
     if(handle_exists):
         following = get_users_someone_follows(handle)
         tweets = get_tweets_from_users(following)
-        return render_template("tweets.html", tweets=tweets)
+        return render_template("tweets_of_people_you_follow.html", tweets=tweets)
     else:
         return redirect('/')
 
@@ -239,7 +250,6 @@ def create_content(text, media):
     g.conn.execute("""INSERT INTO content VALUES (%s, %s, %s);""", cid, text, media)
 
     return cid
-
 
 # checks if a handle exists
 def check_if_handle_exists(handle):

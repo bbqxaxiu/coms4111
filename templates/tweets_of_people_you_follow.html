@@ -1,0 +1,46 @@
+<html>
+  <style>
+    body{
+      font-size: 15pt;
+      font-family: arial;
+    }
+    img{
+      height: 400px;
+      width: 400px;
+    }
+  </style>
+
+  <body>
+    - - - - - - - - - - - - VIEW YOUR TWEETS - - - - - - - - - - - -
+    <br/>
+      <form method="GET" action="/your_tweets">
+        <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
+      </form>
+    - - - - - - - - - - - - VIEW TWEETS OF PEOPLE YOU FOLLOW - - - - - - - - - - - -
+    <br/>
+    <form method="GET" action="/display">
+      <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
+    </form>
+    <div>
+      Tweets of people you follow:
+      <br/>
+      <br/>
+      {% for key, value in tweets.items()%}
+        <div>{{loop.index}}. {{value[0]}}</div>
+        {% if value[1] %}
+          <div><img src="{{value[1]}}"</img></div>
+        {% endif %}
+        <br/>
+      {% endfor %}
+    </div>
+    - - - - - - - - - - - - CREATE A TWEET - - - - - - - - - - - -
+    <br/>
+    <form method="GET" action="/create">
+      <p>Enter your handle: <input type="text" name="handle"></p>
+      <p>Enter text: <input type="text" name="text"></p>
+      <p>Enter media: <input type="text" name="media"></p>
+      <p><input type="submit" value="Enter"></p>
+    </form>
+  </body>
+
+</html>

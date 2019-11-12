@@ -11,15 +11,15 @@
   </style>
 
   <body>
-    - - - - - - - - - - - - VIEW TWEETS OF PEOPLE YOU FOLLOW - - - - - - - - - - - -
+    - - - - - - - - - - - - VIEW YOUR TWEETS - - - - - - - - - - - -
     <br/>
-    <form method="GET" action="/display">
+    <form method="GET" action="/your_tweets">
       <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
     </form>
     <div>
-      Tweets of people you follow:
-      <br>
-      <br>
+      Your tweets:
+      <br/>
+      <br/>
       {% for key, value in tweets.items()%}
         <div>{{loop.index}}. {{value[0]}}</div>
         {% if value[1] %}
@@ -28,6 +28,11 @@
         <br/>
       {% endfor %}
     </div>
+    - - - - - - - - - - - - VIEW TWEETS OF PEOPLE YOU FOLLOW - - - - - - - - - - - -
+    <br/>
+    <form method="GET" action="/display">
+      <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
+    </form>
     - - - - - - - - - - - - CREATE A TWEET - - - - - - - - - - - -
     <br/>
     <form method="GET" action="/create">
