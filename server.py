@@ -13,6 +13,8 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
+from random import randint
+from datetime import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -158,7 +160,20 @@ def index():
 #
 @app.route('/another')
 def another():
+  create_tweet("vladverba", "vlad's test text", "vlad's test media")
   return render_template("another.html")
+
+@app.route('/create', methods=['GET'])
+def create():
+    handle = request.args.get('handle')
+    text = request.args.get('text')
+    media = request.args.get('media')
+
+    handle_exists = check_if_handle_exists(handle)
+    if(handle_exists):
+        create_tweet(handle, text, media)
+
+    return redirect('/')
 
 
 # Checks if the user exists.
@@ -170,8 +185,6 @@ def display():
     if(handle_exists):
         following = get_users_someone_follows(handle)
         tweets = get_tweets_from_users(following)
-        print("tweets:")
-        print(tweets)
         return render_template("tweets.html", tweets=tweets)
     else:
         return redirect('/')
@@ -189,12 +202,48 @@ def login():
     this_is_never_executed()
 
 
+# HELPER FUNCTIONS
+
+# generates random date time for tweets (always will be in 2020)
+def generate_date_time():
+    month = randint(10, 12)
+    day = randint(10, 28)
+    year = randint(2020, 2030)
+
+    hour = randint(00, 23)
+    minute = randint(00, 59)
+    second = randint(00, 59)
+
+    return str(year) + "-" + str(month) + "-" + str(day) + " " + str(hour) + ":" + str(minute) + ":" + str(second)
+
 # SQL QUERIES
+
+# creates a tweet under a handle (calls on create_content)
+def create_tweet(handle, text, media):
+    id = randint(10000000000, 99999999999)
+    while(g.conn.execute("SELECT * from tweets_with_content t where CAST(t.tid as bigint)=%s", id).fetchone() is not None):
+        id = randint(10000000000, 99999999999)
+
+    like_num = randint(0, 100000)
+    retweet_num = randint(0, 100000)
+    date_time = generate_date_time()
+
+    cid = create_content(text, media)
+    g.conn.execute("""INSERT INTO tweets_with_content VALUES(%s, %s, %s, %s, %s, %s)""", id, date_time, like_num, retweet_num, cid, handle)
+
+# creates a content, returns its cid (for use in create_tweet)
+def create_content(text, media):
+    cid = randint(10000000000, 99999999999)
+    while(g.conn.execute("SELECT * from content c where CAST(c.cid as bigint)=%s", cid).fetchone() is not None):
+        cid = randint(10000000000, 99999999999)
+    g.conn.execute("""INSERT INTO content VALUES (%s, %s, %s);""", cid, text, media)
+
+    return cid
+
 
 # checks if a handle exists
 def check_if_handle_exists(handle):
-    cursor = g.conn.execute("SELECT * from users u where u.handle=%s", handle)
-    record = cursor.fetchone()
+    record = g.conn.execute("SELECT * from users u where u.handle=%s", handle).fetchone()
     if(record is None):
         return False
     else:
@@ -209,12 +258,10 @@ def get_users_someone_follows(handle):
 
     return following
 
-# returns a a dict. of tweets created from a list of users
+# returns tweets that a user (a list of users) has (have) created
 def get_tweets_from_users(users):
-
     tweets={}
     for person in users:
-        # all tweets of the person they follow
         cursor = g.conn.execute("SELECT * from tweets_with_content t where t.handle=%s", person)
         for record in cursor:
             media = g.conn.execute("SELECT media from content c where CAST(c.cid as bigint)=%s", record['cid']).fetchone()[0]
