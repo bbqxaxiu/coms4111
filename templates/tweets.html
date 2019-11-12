@@ -4,18 +4,28 @@
       font-size: 15pt;
       font-family: arial;
     }
+    img{
+      height: 400px;
+      width: 400px;
+    }
   </style>
 
   <body>
-    <div>
-      {% for key, value in tweets.items()%}
-      <div>{{key}}</div>
-      <div>{{value}}</div>
-      {% endfor %}
-    </div>
     <form method="GET" action="/display">
       <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
     </form>
+    <div>
+      Tweets of people you follow:
+      <br>
+      <br>
+      {% for key, value in tweets.items()%}
+        <div>{{loop.index}}. {{value[0]}}</div>
+        {% if value[1] %}
+          <div><img src="{{value[1]}}"</img></div>
+        {% endif %}
+        <br/>
+      {% endfor %}
+    </div>
   </body>
 
 </html>
