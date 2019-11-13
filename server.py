@@ -15,6 +15,7 @@ from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
 from random import randint
 from datetime import datetime
+from datetime import date
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -167,6 +168,24 @@ def index():
 def another():
   return render_template("another.html")
 
+# Creates an account. Every account is unverified by default.
+@app.route('/create_account', methods=['GET'])
+def create_account():
+    date = datetime.today()
+    handle = request.args.get('handle')
+    checked = request.args.get('checkbox')
+
+    if (handle is not None):
+        g.conn.execute("""INSERT INTO users VALUES (%s, %s);""", handle, date)
+
+    if (checked): # request verification
+        g.conn.execute("""INSERT INTO unverified_users VALUES (%s, %s);""", handle, True)
+    else:
+        g.conn.execute("""INSERT INTO unverified_users VALUES (%s, %s);""", handle, False)
+
+    return redirect('/')
+
+
 # Creates a tweet for a given handle.
 @app.route('/create', methods=['GET'])
 def create():
@@ -180,7 +199,7 @@ def create():
 
     return redirect('/')
 
-# Displays a user's tweets
+# Displays a user's tweets.
 @app.route('/your_tweets', methods=['GET'])
 def your_tweets():
     handle = request.args.get('handle')
@@ -209,11 +228,11 @@ def display():
 def add():
   followerHandle = request.form['followerHandle']
   followingHandle = request.form['followedHandle']
-  #print(followingHandle)
-  #print(followerHandle)
-  followerHandle_exists = check_if_handle_exists(followerHandle)
-  followingHandle_exists = check_if_handle_exists(followingHandle)
-  if(followerHandle_exists and followingHandle_exists):
+
+  handles_exist = check_if_handle_exists(followerHandle) and check_if_handle_exists(followingHandle)
+  already_following = followingHandle in get_users_someone_follows(followerHandle)
+
+  if(handles_exist and not already_following):
       g.conn.execute("INSERT INTO following VALUES (%s, %s)", followerHandle, followingHandle)
       return redirect('/')
   else:
@@ -224,6 +243,8 @@ def add():
 def login():
     abort(401)
     this_is_never_executed()
+
+# HELPER FUNCTIONS
 
 # generates random date time for tweets (always will be in 2020)
 def generate_date_time():
@@ -238,7 +259,7 @@ def generate_date_time():
     return str(year) + "-" + str(month) + "-" + str(day) + " " + str(hour) + ":" + str(minute) + ":" + str(second)
 
 
-# queries
+# SQL QUERIES
 
 # creates a tweet under a handle (calls on create_content)
 def create_tweet(handle, text, media):
@@ -271,6 +292,7 @@ def check_if_handle_exists(handle):
     else:
         return True
 
+# returns a list of people someone follows
 def get_users_someone_follows(handle):
     cursor = g.conn.execute("SELECT * from following f where f.follower=%s", handle)
     following = []

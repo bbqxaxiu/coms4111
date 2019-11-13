@@ -7,6 +7,16 @@
   </style>
   <body>
       <h1>Bootleg Twitter</h1>
+      - - - - - - - - - - - - CREATE AN ACCOUNT - - - - - - - - - - - -
+      <br/>
+      <form method="GET" action="/create_account">
+          <p>Enter your preferred handle (at most 20 characters): <input type="text" name="handle">
+          <p> All users are unverified by default. Would you like to request verification?
+          <input type="checkbox" name="checkbox">
+          <br/>
+          <br/>
+          <input type="submit" value="Enter"></p>
+      </form>
       - - - - - - - - - - - - VIEW YOUR TWEETS - - - - - - - - - - - -
       <br/>
       <form method="GET" action="/your_tweets">
