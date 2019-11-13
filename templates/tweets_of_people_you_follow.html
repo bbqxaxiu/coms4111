@@ -11,11 +11,19 @@
   </style>
 
   <body>
+    <h1>Bootleg Twitter</h1>
     - - - - - - - - - - - - VIEW YOUR TWEETS - - - - - - - - - - - -
     <br/>
-      <form method="GET" action="/your_tweets">
+    <form method="GET" action="/your_tweets">
         <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
-      </form>
+    </form>
+    - - - - - - - - - - - - FOLLOW A USER - - - - - - - - - - - -
+    <br/>
+    <form method="POST" action="/add">
+        <p>Who are you?: <input type="text" name="followerHandle"> </p>
+        <p> Who would you like to follow?: <input type="text" name="followedHandle">
+        <input type="submit" value="Follow"></p>
+    </form>
     - - - - - - - - - - - - VIEW TWEETS OF PEOPLE YOU FOLLOW - - - - - - - - - - - -
     <br/>
     <form method="GET" action="/display">

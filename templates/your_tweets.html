@@ -28,6 +28,13 @@
         <br/>
       {% endfor %}
     </div>
+    - - - - - - - - - - - - FOLLOW A USER - - - - - - - - - - - -
+    <br/>
+    <form method="POST" action="/add">
+        <p>Who are you?: <input type="text" name="followerHandle"> </p>
+        <p> Who would you like to follow?: <input type="text" name="followedHandle">
+        <input type="submit" value="Follow"></p>
+    </form>
     - - - - - - - - - - - - VIEW TWEETS OF PEOPLE YOU FOLLOW - - - - - - - - - - - -
     <br/>
     <form method="GET" action="/display">

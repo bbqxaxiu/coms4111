@@ -23,7 +23,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #
 # The following is a dummy URI that does not connect to a valid database. You will need to modify it to connect to your Part 2 database in order to use the data.
 #
-# XXX: The URI should be in the format of: 
+# XXX: The URI should be in the format of:
 #
 #     postgresql://USER:PASSWORD@35.243.220.243/proj1part2
 #
@@ -53,7 +53,7 @@ engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'
 @app.before_request
 def before_request():
   """
-  This function is run at the beginning of every web request 
+  This function is run at the beginning of every web request
   (every time you enter an address in the web browser).
   We use it to setup a database connection that can be used throughout the request.
 
@@ -87,7 +87,7 @@ def teardown_request(exception):
 #       @app.route("/foobar/", methods=["POST", "GET"])
 #
 # PROTIP: (the trailing / in the path is important)
-# 
+#
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
@@ -129,14 +129,14 @@ def index():
   # You can see an example template in templates/index.html
   #
   # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
+  # for example, "data" key in the context variable defined below will be
   # accessible as a variable in index.html:
   #
   #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
   #     <div>{{data}}</div>
-  #     
+  #
   #     # creates a <div> tag for each element in data
-  #     # will print: 
+  #     # will print:
   #     #
   #     #   <div>grace hopper</div>
   #     #   <div>alan turing</div>
@@ -157,7 +157,7 @@ def index():
 
 #
 # This is an example of a different path.  You can see it at:
-# 
+#
 #     localhost:8111/another
 #
 # Notice that the function name is another() rather than index()
@@ -173,11 +173,11 @@ def create():
     handle = request.args.get('handle')
     text = request.args.get('text')
     media = request.args.get('media')
-    
+
     handle_exists = check_if_handle_exists(handle)
     if(handle_exists):
         create_tweet(handle, text, media)
-    
+
     return redirect('/')
 
 # Displays a user's tweets
@@ -200,7 +200,7 @@ def display():
     if(handle_exists):
         following = get_users_someone_follows(handle)
         tweets = get_tweets_from_users(following)
-        return render_template("tweets.html", tweets=tweets)
+        return render_template("tweets_of_people_you_follow.html", tweets=tweets)
     else:
         return redirect('/')
 
@@ -230,11 +230,11 @@ def generate_date_time():
     month = randint(10, 12)
     day = randint(10, 28)
     year = randint(2020, 2030)
-    
+
     hour = randint(00, 23)
     minute = randint(00, 59)
     second = randint(00, 59)
-    
+
     return str(year) + "-" + str(month) + "-" + str(day) + " " + str(hour) + ":" + str(minute) + ":" + str(second)
 
 
@@ -245,7 +245,7 @@ def create_tweet(handle, text, media):
     id = randint(10000000000, 99999999999)
     while(g.conn.execute("SELECT * from tweets_with_content t where CAST(t.tid as bigint)=%s", id).fetchone() is not None):
         id = randint(10000000000, 99999999999)
-    
+
     like_num = randint(0, 100000)
     retweet_num = randint(0, 100000)
     date_time = generate_date_time()
@@ -276,12 +276,12 @@ def get_users_someone_follows(handle):
     following = []
     for record in cursor:
         following.append(record['followed'])
-    
+
     return following
 
 # returns a a dict. of tweets created from a list of users
 def get_tweets_from_users(users):
-    
+
     tweets={}
     for person in users:
         # all tweets of the person they follow
