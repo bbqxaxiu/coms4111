@@ -175,10 +175,14 @@ def create_account():
     handle = request.args.get('handle')
     checked = request.args.get('checkbox')
 
-    if (handle is not None):
+    # error handling
+    if (len(handle) > 20 or not handle.isalnum()):
+        return redirect('/')
+
+    if (handle is not None): # insert into users
         g.conn.execute("""INSERT INTO users VALUES (%s, %s);""", handle, date)
 
-    if (checked): # request verification
+    if (checked): # then insert into unverified_users specifically
         g.conn.execute("""INSERT INTO unverified_users VALUES (%s, %s);""", handle, True)
     else:
         g.conn.execute("""INSERT INTO unverified_users VALUES (%s, %s);""", handle, False)
