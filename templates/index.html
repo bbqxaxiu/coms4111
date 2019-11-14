@@ -10,7 +10,7 @@
       - - - - - - - - - - - - CREATE AN ACCOUNT - - - - - - - - - - - -
       <br/>
       <form method="GET" action="/create_account">
-          <p>Enter your preferred handle (must be alphanumeric and at most 20 characters): <input type="text" name="handle">
+          <p>Enter your preferred handle (must be at most 20 characters): <input type="text" name="handle">
           <p> All users are unverified by default. Would you like to request verification?
           <input type="checkbox" name="checkbox">
           <br/>
@@ -27,6 +27,8 @@
       <form method="POST" action="/add">
           <p>Who are you?: <input type="text" name="followerHandle"> </p>
           <p> Who would you like to follow?: <input type="text" name="followedHandle">
+          <br/>
+          <br/>
           <input type="submit" value="Follow"></p>
       </form>
       - - - - - - - - - - - - VIEW TWEETS OF PEOPLE YOU FOLLOW - - - - - - - - - - - -

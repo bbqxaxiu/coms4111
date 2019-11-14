@@ -13,8 +13,8 @@
   <body>
     - - - - - - - - - - - - CREATE AN ACCOUNT - - - - - - - - - - - -
     <br/>
-    <form method="POST" action="/create_account">
-        <p>Enter your preferred handle (must be alphanumeric and at most 20 characters): <input type="text" name="handle">
+    <form method="GET" action="/create_account">
+        <p>Enter your preferred handle (must be at most 20 characters): <input type="text" name="handle">
         <p> All users are unverified by default. Would you like to request verification?
         <input type="checkbox" name="true" value="true">
         <br/>
@@ -31,10 +31,17 @@
       <br/>
       <br/>
       {% for key, value in tweets.items()%}
-        <div>{{loop.index}}. {{value[0]}}</div>
-        {% if value[1] %}
-          <div><img src="{{value[1]}}"</img></div>
+        <div>{{loop.index}}. <b>{{value[0]}}</b> (on {{value[7]}} at {{value[8]}})</div>
+        {% if value[2] %}
+          <div>{{value[2]}}</div>
         {% endif %}
+        </div>
+        {% if value[3] %}
+          <div><img src="{{value[3]}}"</img></div>
+        {% endif %}
+        <br/>
+        <i># of likes</i>: {{value[4]}} <br/>
+        <i># of retweets</i>: {{value[5]}} <br/>
         <br/>
       {% endfor %}
     </div>
@@ -43,6 +50,8 @@
     <form method="POST" action="/add">
         <p>Who are you?: <input type="text" name="followerHandle"> </p>
         <p> Who would you like to follow?: <input type="text" name="followedHandle">
+        <br/>
+        <br/>
         <input type="submit" value="Follow"></p>
     </form>
     - - - - - - - - - - - - VIEW TWEETS OF PEOPLE YOU FOLLOW - - - - - - - - - - - -

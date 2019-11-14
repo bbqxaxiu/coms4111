@@ -176,7 +176,7 @@ def create_account():
     checked = request.args.get('checkbox')
 
     # error handling
-    if (len(handle) > 20 or not handle.isalnum()):
+    if (len(handle) > 20):
         return redirect('/')
 
     if (handle is not None): # insert into users
@@ -209,7 +209,7 @@ def your_tweets():
     handle = request.args.get('handle')
     handle_exists = check_if_handle_exists(handle)
     if(handle_exists):
-        tweets = get_tweets_from_users([handle])
+        tweets = get_tweets_from_users([handle], handle)
         return render_template("your_tweets.html", tweets=tweets)
     else:
         return redirect('/')
@@ -222,10 +222,59 @@ def display():
     handle_exists = check_if_handle_exists(handle)
     if(handle_exists):
         following = get_users_someone_follows(handle)
-        tweets = get_tweets_from_users(following)
+        tweets = get_tweets_from_users(following, handle)
         return render_template("tweets_of_people_you_follow.html", tweets=tweets)
     else:
         return redirect('/')
+
+# Likes a tweet. Also updates notifications table.
+@app.route('/like', methods=['GET'])
+def like():
+    tid = 0
+    users_handle = "" # person who did the liking
+    user_to_send_notification_to = "" # person who receives the notification
+    for key, value in request.args.items():
+        if value == "like":
+            user_to_send_notification_to = key.split("+")[0]
+            tid = key.split("+")[1]
+            users_handle = key.split("+")[2]
+
+    # update like_num
+    g.conn.execute("""UPDATE tweets_with_content t SET like_num=like_num+1 WHERE CAST(t.tid as bigint)=%s""", tid)
+
+    # update view
+    following = get_users_someone_follows(users_handle)
+    tweets = get_tweets_from_users(following, users_handle)
+
+    # send notification
+    add_notification(user_to_send_notification_to, users_handle + " liked your tweet!")
+
+    return render_template("tweets_of_people_you_follow.html", tweets=tweets)
+
+# Retweets a tweet. Also updates notifications table.
+@app.route('/retweet', methods=['GET'])
+def retweet():
+    tid = 0
+    users_handle = ""
+    user_to_send_notification_to = ""
+    for key, value in request.args.items():
+        if value == "retweet":
+            user_to_send_notification_to = key.split("+")[0]
+            tid = key.split("+")[1]
+            users_handle = key.split("+")[2]
+
+    # update retweet_num
+    g.conn.execute("""UPDATE tweets_with_content t SET retweet_num=retweet_num+1 WHERE CAST(t.tid as bigint)=%s""", tid)
+
+    # update view
+    following = get_users_someone_follows(users_handle)
+    tweets = get_tweets_from_users(following, users_handle)
+
+    # send notification
+    add_notification(user_to_send_notification_to, users_handle + " retweeted your tweet!")
+
+    return render_template("tweets_of_people_you_follow.html", tweets=tweets)
+
 
 # Follow a user
 @app.route('/add', methods=['POST'])
@@ -250,39 +299,38 @@ def login():
 
 # HELPER FUNCTIONS
 
-# generates random date time for tweets (always will be in 2020)
-def generate_date_time():
-    month = randint(10, 12)
-    day = randint(10, 28)
-    year = randint(2020, 2030)
-
-    hour = randint(00, 23)
-    minute = randint(00, 59)
-    second = randint(00, 59)
-
-    return str(year) + "-" + str(month) + "-" + str(day) + " " + str(hour) + ":" + str(minute) + ":" + str(second)
-
+# generates a random id
+def generate_random_id():
+    return randint(10000000000, 99999999999)
 
 # SQL QUERIES
 
+# adds a notification to the database
+def add_notification(handle, notification):
+    id = generate_random_id()
+    date_time = str(datetime.now()).split(".")[0]
+
+    g.conn.execute("""INSERT INTO notification_received_by_user VALUES(%s, %s, %s, %s);""", id, notification, handle, date_time)
+
+
 # creates a tweet under a handle (calls on create_content)
 def create_tweet(handle, text, media):
-    id = randint(10000000000, 99999999999)
+    id = generate_random_id()
     while(g.conn.execute("SELECT * from tweets_with_content t where CAST(t.tid as bigint)=%s", id).fetchone() is not None):
         id = randint(10000000000, 99999999999)
 
-    like_num = randint(0, 100000)
-    retweet_num = randint(0, 100000)
-    date_time = generate_date_time()
+    like_num = 0
+    retweet_num = 0
+    date_time = str(datetime.now()).split(".")[0]
 
     cid = create_content(text, media)
     g.conn.execute("""INSERT INTO tweets_with_content VALUES(%s, %s, %s, %s, %s, %s)""", id, date_time, like_num, retweet_num, cid, handle)
 
 # creates a content, returns its cid (for use in create_tweet)
 def create_content(text, media):
-    cid = randint(10000000000, 99999999999)
+    cid = generate_random_id()
     while(g.conn.execute("SELECT * from content c where CAST(c.cid as bigint)=%s", cid).fetchone() is not None):
-        cid = randint(10000000000, 99999999999)
+        cid = generate_random_id()
     g.conn.execute("""INSERT INTO content VALUES (%s, %s, %s);""", cid, text, media)
 
     return cid
@@ -306,16 +354,22 @@ def get_users_someone_follows(handle):
     return following
 
 # returns a a dict. of tweets created from a list of users
-def get_tweets_from_users(users):
+# users_handle is the user which called on this method
+def get_tweets_from_users(users, users_handle):
 
     tweets={}
     for person in users:
         # all tweets of the person they follow
         cursor = g.conn.execute("SELECT * from tweets_with_content t where t.handle=%s", person)
         for record in cursor:
-            media = g.conn.execute("SELECT media from content c where CAST(c.cid as bigint)=%s", record['cid']).fetchone()[0]
+            tid = record['tid']
             text = g.conn.execute("SELECT text from content c where CAST(c.cid as bigint)=%s", record['cid']).fetchone()[0]
-            tweets[record['cid']] = (text, media)
+            media = g.conn.execute("SELECT media from content c where CAST(c.cid as bigint)=%s", record['cid']).fetchone()[0]
+            like_num = record['like_num']
+            retweet_num = record['retweet_num']
+            date = str(record['date_time']).split()[0]
+            time = str(record['date_time']).split()[1]
+            tweets[record['cid']] = (person, tid, text, media, like_num, retweet_num, users_handle, date, time)
     return tweets
 
 
