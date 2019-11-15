@@ -43,7 +43,7 @@
         - - - - - - - - - - - - VIEW YOUR TWEETS - - - - - - - - - - - -
         <br/>
         <form method="GET" action="/your_tweets">
-            <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
+          <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
         </form>
         - - - - - - - - - - - - FOLLOW A USER - - - - - - - - - - - -
         <br/>
@@ -59,30 +59,6 @@
         <form method="GET" action="/display">
           <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
         </form>
-        <div>
-          Tweets of people you follow:
-          <br/>
-          <br/>
-          {% for key, value in tweets.items()%}
-            <div>{{loop.index}}. <b>{{value[0]}}</b> (on {{value[7]}} at {{value[8]}})</div>
-            {% if value[2] %}
-              <div>{{value[2]}}</div>
-            {% endif %}
-            {% if value[3] %}
-              <div><img src="{{value[3]}}"</img></div>
-            {% endif %}
-            <br/>
-            <i># of likes</i>: {{value[4]}}
-            <form method="GET" action="/like">
-              <input type="submit" name={{value[0]}}+{{value[1]}}+{{value[6]}} value="like">
-            </form>
-            <i># of retweets</i>: {{value[5]}}
-            <form method="GET" action="/retweet">
-              <input type="submit" name={{value[0]}}+{{value[1]}}+{{value[6]}} value="retweet">
-            </form>
-            <br/>
-          {% endfor %}
-        </div>
       </body>
     </div>
     <div class="column">
@@ -111,6 +87,14 @@
         <form method="GET" action="/your_notifications">
             <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
         </form>
+        Your notifications:
+        <br/>
+        <br/>
+        {% for key, value in notifications.items()%}
+        <div>{{loop.index}}. {{value[0]}} (on {{value[1]}} at {{value[2]}})</div>
+        <br/>
+        <br/>
+        {% endfor %}
       </div>
     </div>
   </div>

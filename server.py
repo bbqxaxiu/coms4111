@@ -341,11 +341,36 @@ def login():
     abort(401)
     this_is_never_executed()
 
+# Displays a user's notifications
+@app.route('/your_notifications', methods=['GET'])
+def your_notifications():
+    handle = request.args.get('handle')
+    handle_exists = check_if_handle_exists(handle)
+    if(handle_exists):
+        notifications = get_notifications_from_users([handle])
+        return render_template("your_notifications.html", notifications=notifications)
+    else:
+        return redirect('/')
+
 # HELPER FUNCTIONS
 
 # generates a random id
 def generate_random_id():
     return randint(10000000000, 99999999999)
+
+## returns a a dict. of notifications created from a list of users
+def get_notifications_from_users(users):
+
+    notifications={}
+    for person in users:
+        cursor = g.conn.execute("SELECT * FROM notification_received_by_user n where n.handle=%s", person)
+        for record in cursor:
+            time = g.conn.execute("SELECT date_time FROM notification_received_by_user n where CAST(n.nid as bigint)=%s", record['nid']).fetchone()[0]
+            text = g.conn.execute("SELECT notification from notification_received_by_user n where CAST(n.nid as bigint)=%s", record['nid']).fetchone()[0]
+            date = str(record['date_time']).split()[0]
+            time = str(record['date_time']).split()[1]
+            notifications[record['nid']] = (text, date, time)
+    return notifications
 
 # SQL QUERIES
 
