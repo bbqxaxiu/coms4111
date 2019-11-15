@@ -92,6 +92,23 @@
           {% endfor %}
       </div>
       <div>
+        - - - - - - - - - - - - CREATE A STORY - - - - - - - - - - - -
+        <br/>
+        <form method="GET" action="/createStory">
+            <p>Enter your handle: <input type="text" name="handle"></p>
+            <p>Enter text: <input type="text" name="text"></p>
+            <p>Enter media: <input type="text" name="media"></p>
+            <p><input type="submit" value="Enter"></p>
+        </form>
+      </div>
+      <div>
+        - - - - - - - - - - - - VIEW STORIES OF PEOPLE YOU FOLLOW - - - - - - - - - - - -
+        <br/>
+        <form method="GET" action="/displayStories">
+            <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
+        </form>
+      </div>
+      <div>
         - - - - - - - - - - - - VIEW YOUR NOTIFICATIONS - - - - - - - - - - - -
         <br/>
         <form method="GET" action="/your_notifications">

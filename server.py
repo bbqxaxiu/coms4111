@@ -168,6 +168,30 @@ def index():
 def another():
   return render_template("another.html")
 
+# Displays a user's stories
+@app.route('/your_stories', methods=['GET'])
+def your_stories():
+    handle = request.args.get('handle')
+    handle_exists = check_if_handle_exists(handle)
+    if(handle_exists):
+        stories = get_stories_from_users([handle])
+        return render_template("your_stories.html", stories=stories)
+    else:
+        return redirect('/')
+
+# Checks if the user exists.
+# If the user exists, display stories of people they follow.
+@app.route('/displayStories', methods=['GET'])
+def displayStories():
+    handle = request.args.get('handle')
+    handle_exists = check_if_handle_exists(handle)
+    if(handle_exists):
+        following = get_users_someone_follows(handle)
+        stories = get_stories_from_users(following)
+        return render_template("stories_of_people_you_follow.html", stories=stories)
+    else:
+        return redirect('/')
+
 # Creates an account. Every account is unverified by default.
 @app.route('/create_account', methods=['GET'])
 def create_account():
@@ -336,6 +360,19 @@ def your_messages():
     else:
         return redirect('/')
 
+# Creates a story for a given handle.
+@app.route('/createStory', methods=['GET'])
+def createStory():
+    handle = request.args.get('handle')
+    text = request.args.get('text')
+    media = request.args.get('media')
+
+    handle_exists = check_if_handle_exists(handle)
+    if(handle_exists):
+        create_story(handle, text, media)
+
+    return redirect('/')
+
 @app.route('/login')
 def login():
     abort(401)
@@ -373,6 +410,31 @@ def get_notifications_from_users(users):
     return notifications
 
 # SQL QUERIES
+
+## returns a a dict. of stories created from a list of users
+def get_stories_from_users(users):
+    stories={}
+    for person in users:
+        cursor = g.conn.execute("SELECT * from stories_with_content t where t.handle=%s", person)
+        for record in cursor:
+            handle = record['handle']
+            date = str(record['datetime']).split()[0]
+            time = str(record['datetime']).split()[1]
+            media = g.conn.execute("SELECT media from content c where CAST(c.cid as bigint)=%s", record['cid']).fetchone()[0]
+            text = g.conn.execute("SELECT text from content c where CAST(c.cid as bigint)=%s", record['cid']).fetchone()[0]
+            stories[record['cid']] = (text, media, handle, date, time)
+    return stories
+
+# creates a story under a handle (calls on create_content)
+def create_story(handle, text, media):
+    sid = randint(10000000000, 99999999999)
+    while(g.conn.execute("SELECT * FROM stories_with_content t where CAST(t.sid as bigint)=%s", sid).fetchone() is not None):
+        sid = randint(10000000000, 99999999999)
+
+    date_time = str(datetime.now()).split(".")[0]
+
+    cid = create_content(text, media)
+    g.conn.execute("""INSERT INTO stories_with_content VALUES(%s, %s, %s, %s)""", sid, date_time, cid, handle)
 
 # adds a notification to the database
 def add_notification(handle, notification):
