@@ -249,7 +249,11 @@ def like():
     # send notification
     add_notification(user_to_send_notification_to, users_handle + " liked your tweet!")
 
-    return render_template("tweets_of_people_you_follow.html", tweets=tweets)
+    if (users_handle == user_to_send_notification_to):
+        tweets = get_tweets_from_users([users_handle], users_handle)
+        return render_template("your_tweets.html", tweets=tweets)
+    else:
+        return render_template("tweets_of_people_you_follow.html", tweets=tweets)
 
 # Retweets a tweet. Also updates notifications table.
 @app.route('/retweet', methods=['GET'])
@@ -273,8 +277,11 @@ def retweet():
     # send notification
     add_notification(user_to_send_notification_to, users_handle + " retweeted your tweet!")
 
-    return render_template("tweets_of_people_you_follow.html", tweets=tweets)
-
+    if (users_handle == user_to_send_notification_to):
+        tweets = get_tweets_from_users([users_handle], users_handle)
+        return render_template("your_tweets.html", tweets=tweets)
+    else:
+        return render_template("tweets_of_people_you_follow.html", tweets=tweets)
 
 # Follow a user
 @app.route('/add', methods=['POST'])
@@ -291,6 +298,43 @@ def add():
   else:
       return redirect('/')
 
+# browse someones tweets
+@app.route('/browse', methods=["GET"])
+def browse():
+    handle = request.args.get('handle')
+    handle_exists = check_if_handle_exists(handle)
+    if(handle_exists):
+        tweets = get_tweets_from_users([handle], handle)
+        return render_template("browse.html", tweets=tweets)
+    else:
+        return redirect('/')
+
+# Creates/sends a message for a given handle.
+@app.route('/createMessage', methods=['GET'])
+def createMessage():
+    senderHandle = request.args.get('senderHandle')
+    recipientHandle = request.args.get('recipientHandle')
+    text = request.args.get('messageText')
+    media = request.args.get('messageMedia')
+
+    handle_exists = check_if_handle_exists(senderHandle)
+    handle_exists2 = check_if_handle_exists(recipientHandle)
+
+    if(handle_exists and handle_exists2):
+        create_message(senderHandle, recipientHandle, text, media)
+
+    return redirect('/')
+
+# Displays a user's recieved messages
+@app.route('/your_messages', methods=['GET'])
+def your_messages():
+    handle = request.args.get('handle')
+    handle_exists = check_if_handle_exists(handle)
+    if(handle_exists):
+        messages = get_messages_from_users([handle], handle)
+        return render_template("your_messages.html", messages=messages)
+    else:
+        return redirect('/')
 
 @app.route('/login')
 def login():
@@ -372,6 +416,32 @@ def get_tweets_from_users(users, users_handle):
             tweets[record['cid']] = (person, tid, text, media, like_num, retweet_num, users_handle, date, time)
     return tweets
 
+# creates a message under a handle (calls on create_content)
+def create_message(senderHandle, recipientHandle, text, media):
+    mid = generate_random_id()
+    while(g.conn.execute("SELECT * FROM messages_with_content m where CAST(m.mid as bigint)=%s", mid).fetchone() is not None):
+        mid = randint(10000000000, 99999999999)
+
+    date_time = str(datetime.now()).split(".")[0]
+
+    cid = create_content(text, media)
+    g.conn.execute("""INSERT INTO messages_with_content VALUES(%s, %s, %s, %s, %s)""", mid, date_time, cid, senderHandle, recipientHandle)
+
+## returns a a dict. of messages
+def get_messages_from_users(users, users_handle):
+
+    messages={}
+    for person in users:
+        cursor = g.conn.execute("SELECT * from messages_with_content t where t.recipient=%s", person)
+        for record in cursor:
+            mid = record['mid']
+            text = g.conn.execute("SELECT text from content c where CAST(c.cid as bigint)=%s", record['cid']).fetchone()[0]
+            media = g.conn.execute("SELECT media from content c where CAST(c.cid as bigint)=%s", record['cid']).fetchone()[0]
+            date = str(record['date_time']).split()[0]
+            time = str(record['date_time']).split()[1]
+            sender = record['sender']
+            messages[record['cid']] = (person, mid, text, media, users_handle, date, time, sender)
+    return messages
 
 if __name__ == "__main__":
   import click

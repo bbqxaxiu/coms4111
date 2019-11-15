@@ -4,6 +4,10 @@
       font-size: 15pt;
       font-family: arial;
     }
+    img{
+      height: 400px;
+      width: 400px;
+    }
     .column {
       float: left;
       width: 50%;
@@ -88,6 +92,21 @@
       <form method="GET" action="/browse">
           <p>Enter any handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
       </form>
+      {% for key, value in tweets.items()%}
+        <div>{{loop.index}}. <b>{{value[0]}}</b> (on {{value[7]}} at {{value[8]}})</div>
+        {% if value[2] %}
+          <div>{{value[2]}}</div>
+        {% endif %}
+        {% if value[3] %}
+          <div><img src="{{value[3]}}"</img></div>
+        {% endif %}
+        <br/>
+        <i># of likes</i>: {{value[4]}}
+        <br/>
+        <i># of retweets</i>: {{value[5]}}
+        <br/>
+        <br/>
+      {% endfor %}
     </body>
   </div>
 </html>

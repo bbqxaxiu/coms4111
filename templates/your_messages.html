@@ -76,6 +76,20 @@
           <form method="GET" action="/your_messages">
           <p>Enter your handle: <input type="text" name="handle"> <input type="submit" value="Enter"></p>
           </form>
+          Your messages:
+          <br/>
+          <br/>
+          {% for key, value in messages.items()%}
+          <div>{{loop.index}}. <b>{{value[7]}}</b> (on {{value[5]}} at {{value[6]}})</div>
+          {% if value[2] %}
+          <div>{{value[2]}}</div>
+          {% endif %}
+          {% if value[3] %}
+          <div><img src="{{value[3]}}"</img></div>
+          {% endif %}
+          <br/>
+          <br/>
+          {% endfor %}
       </div>
     </div>
   </div>
