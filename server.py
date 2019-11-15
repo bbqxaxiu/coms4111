@@ -171,25 +171,31 @@ def another():
 # Displays a user's stories
 @app.route('/your_stories', methods=['GET'])
 def your_stories():
-    handle = request.args.get('handle')
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        stories = get_stories_from_users([handle])
-        return render_template("your_stories.html", stories=stories)
-    else:
+    try:
+        handle = request.args.get('handle')
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            stories = get_stories_from_users([handle])
+            return render_template("your_stories.html", stories=stories)
+        else:
+            return redirect('/')
+    except:
         return redirect('/')
 
 # Checks if the user exists.
 # If the user exists, display stories of people they follow.
 @app.route('/displayStories', methods=['GET'])
 def displayStories():
-    handle = request.args.get('handle')
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        following = get_users_someone_follows(handle)
-        stories = get_stories_from_users(following)
-        return render_template("stories_of_people_you_follow.html", stories=stories)
-    else:
+    try:
+        handle = request.args.get('handle')
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            following = get_users_someone_follows(handle)
+            stories = get_stories_from_users(following)
+            return render_template("stories_of_people_you_follow.html", stories=stories)
+        else:
+            return redirect('/')
+    except:
         return redirect('/')
 
 # Creates an account. Every account is unverified by default.
@@ -203,175 +209,208 @@ def create_account():
     if (len(handle) > 20):
         return redirect('/')
 
-    if (handle is not None): # insert into users
-        g.conn.execute("""INSERT INTO users VALUES (%s, %s);""", handle, date)
+    try:
+        if (handle is not None): # insert into users
+            g.conn.execute("""INSERT INTO users VALUES (%s, %s);""", handle, date)
 
-    if (checked): # then insert into unverified_users specifically
-        g.conn.execute("""INSERT INTO unverified_users VALUES (%s, %s);""", handle, True)
-    else:
-        g.conn.execute("""INSERT INTO unverified_users VALUES (%s, %s);""", handle, False)
+        if (checked): # then insert into unverified_users specifically
+            g.conn.execute("""INSERT INTO unverified_users VALUES (%s, %s);""", handle, True)
+        else:
+            g.conn.execute("""INSERT INTO unverified_users VALUES (%s, %s);""", handle, False)
 
-    return redirect('/')
+        return redirect('/')
+    except:
+        return redirect('/')
 
 
 # Creates a tweet for a given handle.
 @app.route('/create', methods=['GET'])
 def create():
-    handle = request.args.get('handle')
-    text = request.args.get('text')
-    media = request.args.get('media')
+    try:
+        handle = request.args.get('handle')
+        text = request.args.get('text')
+        media = request.args.get('media')
 
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        create_tweet(handle, text, media)
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            create_tweet(handle, text, media)
 
-    return redirect('/')
+        return redirect('/')
+    except:
+        return redirect('/')
 
 # Displays a user's tweets.
 @app.route('/your_tweets', methods=['GET'])
 def your_tweets():
-    handle = request.args.get('handle')
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        tweets = get_tweets_from_users([handle], handle)
-        return render_template("your_tweets.html", tweets=tweets)
-    else:
+    try:
+        handle = request.args.get('handle')
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            tweets = get_tweets_from_users([handle], handle)
+            return render_template("your_tweets.html", tweets=tweets)
+        else:
+            return redirect('/')
+    except:
         return redirect('/')
 
 # Checks if the user exists.
 # If the user exists, display tweets of people they follow.
 @app.route('/display', methods=['GET'])
 def display():
-    handle = request.args.get('handle')
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        following = get_users_someone_follows(handle)
-        tweets = get_tweets_from_users(following, handle)
-        return render_template("tweets_of_people_you_follow.html", tweets=tweets)
-    else:
+    try:
+        handle = request.args.get('handle')
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            following = get_users_someone_follows(handle)
+            tweets = get_tweets_from_users(following, handle)
+            return render_template("tweets_of_people_you_follow.html", tweets=tweets)
+        else:
+            return redirect('/')
+    except:
         return redirect('/')
 
 # Likes a tweet. Also updates notifications table.
 @app.route('/like', methods=['GET'])
 def like():
-    tid = 0
-    users_handle = "" # person who did the liking
-    user_to_send_notification_to = "" # person who receives the notification
-    for key, value in request.args.items():
-        if value == "like":
-            user_to_send_notification_to = key.split("+")[0]
-            tid = key.split("+")[1]
-            users_handle = key.split("+")[2]
+    try:
+        tid = 0
+        users_handle = "" # person who did the liking
+        user_to_send_notification_to = "" # person who receives the notification
+        for key, value in request.args.items():
+            if value == "like":
+                user_to_send_notification_to = key.split("+")[0]
+                tid = key.split("+")[1]
+                users_handle = key.split("+")[2]
 
-    # update like_num
-    g.conn.execute("""UPDATE tweets_with_content t SET like_num=like_num+1 WHERE CAST(t.tid as bigint)=%s""", tid)
+        # update like_num
+        g.conn.execute("""UPDATE tweets_with_content t SET like_num=like_num+1 WHERE CAST(t.tid as bigint)=%s""", tid)
 
-    # update view
-    following = get_users_someone_follows(users_handle)
-    tweets = get_tweets_from_users(following, users_handle)
+        # update view
+        following = get_users_someone_follows(users_handle)
+        tweets = get_tweets_from_users(following, users_handle)
 
-    # send notification
-    add_notification(user_to_send_notification_to, users_handle + " liked your tweet!")
+        # send notification
+        add_notification(user_to_send_notification_to, users_handle + " liked your tweet!")
 
-    if (users_handle == user_to_send_notification_to):
-        tweets = get_tweets_from_users([users_handle], users_handle)
-        return render_template("your_tweets.html", tweets=tweets)
-    else:
-        return render_template("tweets_of_people_you_follow.html", tweets=tweets)
+        if (users_handle == user_to_send_notification_to):
+            tweets = get_tweets_from_users([users_handle], users_handle)
+            return render_template("your_tweets.html", tweets=tweets)
+        else:
+            return render_template("tweets_of_people_you_follow.html", tweets=tweets)
+    except:
+        return redirect('/')
 
 # Retweets a tweet. Also updates notifications table.
 @app.route('/retweet', methods=['GET'])
 def retweet():
-    tid = 0
-    users_handle = ""
-    user_to_send_notification_to = ""
-    for key, value in request.args.items():
-        if value == "retweet":
-            user_to_send_notification_to = key.split("+")[0]
-            tid = key.split("+")[1]
-            users_handle = key.split("+")[2]
+    try:
+        tid = 0
+        users_handle = ""
+        user_to_send_notification_to = ""
+        for key, value in request.args.items():
+            if value == "retweet":
+                user_to_send_notification_to = key.split("+")[0]
+                tid = key.split("+")[1]
+                users_handle = key.split("+")[2]
 
-    # update retweet_num
-    g.conn.execute("""UPDATE tweets_with_content t SET retweet_num=retweet_num+1 WHERE CAST(t.tid as bigint)=%s""", tid)
+        # update retweet_num
+        g.conn.execute("""UPDATE tweets_with_content t SET retweet_num=retweet_num+1 WHERE CAST(t.tid as bigint)=%s""", tid)
 
-    # update view
-    following = get_users_someone_follows(users_handle)
-    tweets = get_tweets_from_users(following, users_handle)
+        # update view
+        following = get_users_someone_follows(users_handle)
+        tweets = get_tweets_from_users(following, users_handle)
 
-    # send notification
-    add_notification(user_to_send_notification_to, users_handle + " retweeted your tweet!")
+        # send notification
+        add_notification(user_to_send_notification_to, users_handle + " retweeted your tweet!")
 
-    if (users_handle == user_to_send_notification_to):
-        tweets = get_tweets_from_users([users_handle], users_handle)
-        return render_template("your_tweets.html", tweets=tweets)
-    else:
-        return render_template("tweets_of_people_you_follow.html", tweets=tweets)
+        if (users_handle == user_to_send_notification_to):
+            tweets = get_tweets_from_users([users_handle], users_handle)
+            return render_template("your_tweets.html", tweets=tweets)
+        else:
+            return render_template("tweets_of_people_you_follow.html", tweets=tweets)
+    except:
+        return redirect('/')
 
 # Follow a user
 @app.route('/add', methods=['POST'])
 def add():
-  followerHandle = request.form['followerHandle']
-  followingHandle = request.form['followedHandle']
+    try:
+      followerHandle = request.form['followerHandle']
+      followingHandle = request.form['followedHandle']
 
-  handles_exist = check_if_handle_exists(followerHandle) and check_if_handle_exists(followingHandle)
-  already_following = followingHandle in get_users_someone_follows(followerHandle)
+      handles_exist = check_if_handle_exists(followerHandle) and check_if_handle_exists(followingHandle)
+      already_following = followingHandle in get_users_someone_follows(followerHandle)
 
-  if(handles_exist and not already_following):
-      g.conn.execute("INSERT INTO following VALUES (%s, %s)", followerHandle, followingHandle)
-      return redirect('/')
-  else:
-      return redirect('/')
+      if(handles_exist and not already_following):
+          g.conn.execute("INSERT INTO following VALUES (%s, %s)", followerHandle, followingHandle)
+          return redirect('/')
+      else:
+          return redirect('/')
+    except:
+        return redirect('/')
 
 # browse someones tweets
 @app.route('/browse', methods=["GET"])
 def browse():
-    handle = request.args.get('handle')
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        tweets = get_tweets_from_users([handle], handle)
-        return render_template("browse.html", tweets=tweets)
-    else:
+    try:
+        handle = request.args.get('handle')
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            tweets = get_tweets_from_users([handle], handle)
+            return render_template("browse.html", tweets=tweets)
+        else:
+            return redirect('/')
+    except:
         return redirect('/')
 
 # Creates/sends a message for a given handle.
 @app.route('/createMessage', methods=['GET'])
 def createMessage():
-    senderHandle = request.args.get('senderHandle')
-    recipientHandle = request.args.get('recipientHandle')
-    text = request.args.get('messageText')
-    media = request.args.get('messageMedia')
+    try:
+        senderHandle = request.args.get('senderHandle')
+        recipientHandle = request.args.get('recipientHandle')
+        text = request.args.get('messageText')
+        media = request.args.get('messageMedia')
 
-    handle_exists = check_if_handle_exists(senderHandle)
-    handle_exists2 = check_if_handle_exists(recipientHandle)
+        handle_exists = check_if_handle_exists(senderHandle)
+        handle_exists2 = check_if_handle_exists(recipientHandle)
 
-    if(handle_exists and handle_exists2):
-        create_message(senderHandle, recipientHandle, text, media)
+        if(handle_exists and handle_exists2):
+            create_message(senderHandle, recipientHandle, text, media)
 
-    return redirect('/')
+        return redirect('/')
+    except:
+        return redirect('/')
 
 # Displays a user's recieved messages
 @app.route('/your_messages', methods=['GET'])
 def your_messages():
-    handle = request.args.get('handle')
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        messages = get_messages_from_users([handle], handle)
-        return render_template("your_messages.html", messages=messages)
-    else:
+    try:
+        handle = request.args.get('handle')
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            messages = get_messages_from_users([handle], handle)
+            return render_template("your_messages.html", messages=messages)
+        else:
+            return redirect('/')
+    except:
         return redirect('/')
 
 # Creates a story for a given handle.
 @app.route('/createStory', methods=['GET'])
 def createStory():
-    handle = request.args.get('handle')
-    text = request.args.get('text')
-    media = request.args.get('media')
+    try:
+        handle = request.args.get('handle')
+        text = request.args.get('text')
+        media = request.args.get('media')
 
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        create_story(handle, text, media)
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            create_story(handle, text, media)
 
-    return redirect('/')
+        return redirect('/')
+    except:
+        return redirect('/')
 
 @app.route('/login')
 def login():
@@ -381,12 +420,15 @@ def login():
 # Displays a user's notifications
 @app.route('/your_notifications', methods=['GET'])
 def your_notifications():
-    handle = request.args.get('handle')
-    handle_exists = check_if_handle_exists(handle)
-    if(handle_exists):
-        notifications = get_notifications_from_users([handle])
-        return render_template("your_notifications.html", notifications=notifications)
-    else:
+    try:
+        handle = request.args.get('handle')
+        handle_exists = check_if_handle_exists(handle)
+        if(handle_exists):
+            notifications = get_notifications_from_users([handle])
+            return render_template("your_notifications.html", notifications=notifications)
+        else:
+            return redirect('/')
+    except:
         return redirect('/')
 
 # HELPER FUNCTIONS
